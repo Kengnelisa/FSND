@@ -96,16 +96,19 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
     venue = Venue.query.get(venue_id)
-    upcoming_shows = []
-    past_shows = []
-    for show in venue.shows:
-        if show.start_time < datetime.now():
-            past_shows.append(show)
-        else:
-            upcoming_shows.append(show)
+    upcoming_shows = db.session.query(Artist, Show) \
+        .filter(Artist.id == Show.artist_id) \
+        .filter(Show.venue_id == venue_id) \
+        .filter(Show.start_time > datetime.now()) \
+        .all()
+    past_shows = db.session.query(Artist, Show) \
+        .filter(Artist.id == Show.artist_id) \
+        .filter(Show.venue_id == venue_id) \
+        .filter(Show.start_time < datetime.now()) \
+        .all()
+
     dict_list = []
-    for show in upcoming_shows:
-        artist = Artist.query.get(show.artist_id)
+    for (artist, show) in upcoming_shows:
         dict_list.append({
             "artist_id": show.artist_id,
             "artist_name": artist.name,
@@ -113,9 +116,9 @@ def show_venue(venue_id):
             "start_time": show.start_time.strftime("%Y-%m-%dT%H:%M:%S.000Z")
         })
     upcoming_shows = dict_list
+
     dict_list = []
-    for show in past_shows:
-        artist = Artist.query.get(show.artist_id)
+    for (artist, show) in past_shows:
         dict_list.append({
             "artist_id": show.artist_id,
             "artist_name": artist.name,
@@ -233,16 +236,19 @@ def search_artists():
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
     artist = Artist.query.get(artist_id)
-    upcoming_shows = []
-    past_shows = []
-    for show in artist.shows:
-        if show.start_time < datetime.now():
-            past_shows.append(show)
-        else:
-            upcoming_shows.append(show)
+    upcoming_shows = db.session.query(Venue, Show) \
+        .filter(Venue.id == Show.venue_id) \
+        .filter(Show.artist_id == artist_id) \
+        .filter(Show.start_time > datetime.now()) \
+        .all()
+    past_shows = db.session.query(Artist, Show) \
+        .filter(Venue.id == Show.venue_id) \
+        .filter(Show.artist_id == artist_id) \
+        .filter(Show.start_time < datetime.now()) \
+        .all()
+
     dict_list = []
-    for show in upcoming_shows:
-        venue = Venue.query.get(show.venue_id)
+    for (venue, show) in upcoming_shows:
         dict_list.append({
             "venue_id": show.venue_id,
             "venue_name": venue.name,
@@ -251,8 +257,7 @@ def show_artist(artist_id):
         })
     upcoming_shows = dict_list
     dict_list = []
-    for show in past_shows:
-        venue = Venue.query.get(show.venue_id)
+    for (venue, show) in past_shows:
         dict_list.append({
             "venue_id": show.venue_id,
             "venue_name": venue.name,
